@@ -1,0 +1,17 @@
+{
+    "gen_population": 20,
+    "genes_per_indiv": 20,
+    "convergence_criteria": 1000,
+    "max_iterations": 50000,
+    "selection_treshold": 3,
+    "crossover_points": 1,
+    "mutation_chance": 0.05,
+    "mutation_step_size": 1,
+
+    "selection_method": "tournament",
+    "roulette_weigh_func": "int(n**2)",
+
+    "print_final_gen": false,
+    "print_updates": true,
+    "update_step_perc": 0.01
+}
