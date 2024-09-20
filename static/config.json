@@ -1,20 +1,22 @@
 {
-    "gen_population": 20,
-    "genes_per_indiv": 20,
+    "food": 30,
+    "init_population": 50,
+    "max_population": 500,
+    "max_iterations": 100,
+    "score_to_survive": 0.1,
+    "score_to_reproduce": 1,
 
-    "convergence_criteria": 1000,
-    "max_iterations": 50000,
+    "gatherer_gene": 100,
+    "fertility_gene": 100,
+    "crossover_points_gene": 100,
+    "mutation_chance_gene": 100,
+    "mutation_factor_gene": 100,
 
-    "crossover_points": 1,
+    "gatherer_roulette_weight_func": "int(n**2)",
+    "fertility_multiplier_func": "score*(fert/100)",
 
-    "mutation_chance": 0.05,
-    "mutation_step_size": 1,
-
-    "selection_treshold": 3,
-    "selection_method": "tournament",
-    "roulette_weight_func": "int(n**2)",
-
-    "print_final_gen": false,
+    "print_final_gen": true,
     "print_updates": true,
-    "update_step_perc": 0.01
+    "update_step_perc": 0.01,
+    "print_population_graph": false
 }

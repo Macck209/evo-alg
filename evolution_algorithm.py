@@ -7,84 +7,92 @@ class EvolutionAlgorithm():
 
     def init_firts_gen(self):
         cur_gen=[]
-        gene_count = self.settings.get("genes_per_indiv")
+        init_genome = [self.settings.get("gatherer_gene"),
+                       self.settings.get("fertility_gene"),
+                       self.settings.get("crossover_points_gene"),
+                       self.settings.get("mutation_chance_gene"),
+                       self.settings.get("mutation_factor_gene")]
 
-        for i in range(self.settings.get("gen_population")):
-            individual = [random.randint(0,1) for j in range(gene_count)]
-            cur_gen.append(individual)
+        #TODO multiple groups of different species
+        for i in range(self.settings.get("init_population")):
+            cur_gen.append(init_genome)
         
         return cur_gen
 
 
-    def evaluation(self, individual):
-        score=sum(individual)
-        penalty=0
+    # Roulette-wheel assignment of points based on gatherer_gene
+    def food_evaluation(self, cur_gen):
+        fitness_list=[(indiv, 0) for indiv in cur_gen]
+        cumulative_range=0
+        individual_ranges=[]
+        food_left = self.settings.get("food")
 
-        for i in individual:
-            if i not in range(0,2):
-                penalty+=100
+        # Equation can be edited in config
+        config_equation = self.settings.get("gatherer_roulette_weight_func")
 
-        return score - penalty
+        index=0
+        for indiv in cur_gen:
+            n=indiv[0] # n is the gatherer_gene
+            individual_ranges.append((index, (cumulative_range+1, cumulative_range + eval(config_equation))))
+            cumulative_range += eval(config_equation)
+            index+=1
+
+        while food_left > 0:
+            rnd = random.randint(1, cumulative_range-1)
+
+            for rang in individual_ranges:
+                if rang[1][0] <= rnd <= rang[1][1]:
+                    fitness_list[individual_ranges[0]][1] += 1 # increment fitness score of drawn indiv
+        
+        return fitness_list
+
+
+    def fertility_evaluation(self, fitness_list):
+        config_equation = self.settings.get("fertility_multiplier_func")
+        for indiv in fitness_list:
+            score=indiv[1]
+            fert=indiv[0][1]
+            indiv[1] = eval(config_equation)
+
+        return fitness_list
+
+
+    def evaluation(self, cur_gen):
+        fitness_list = self.food_evaluation(cur_gen)
+        fitness_list = self.fertility_evaluation(fitness_list)
+
+        return fitness_list
         
 
     def selection(self, cur_gen):
-        fitness_list=[]
         selected_indivs=[]
-        for indiv in cur_gen:
-            fitness_list.append((indiv, self.evaluation(indiv)))
+        parents=[]
+        fitness_list = self.evaluation(cur_gen)
+        max_population = self.settings.get("max_population")
+        score_to_survive = self.settings.get("score_to_survive")
+        fitness_list[:] = [indiv for indiv in fitness_list if indiv[1] >= score_to_survive] # remove indivs below treshold
         
-        # Tournament-based selection
-        if self.settings.get("selection_method") == "tournament":
-            fitness_list = sorted(fitness_list, key=lambda x: x[1], reverse=True)
-            for i in range(self.settings.get("selection_treshold")):
-                # if you mess up config settings TODO test it
-                if i >= self.settings.get("gen_population"):
-                    return selected_indivs
-                
-                selected_indivs.append(fitness_list[i][0])
-            
-            return selected_indivs
-        
-        # Roulette-wheel selection
-        cumulative_range=0
-        individual_ranges=[]
+        # Tournament-based selection of parents
+        score_to_reproduce = self.settings.get("score_to_reproduce")
+        fitness_list = sorted(fitness_list, key=lambda x: x[1], reverse=True)
+        for indiv in [fertile_indiv for fertile_indiv in fitness_list if fertile_indiv[1] >= score_to_reproduce]:
+            parents.append(indiv)
 
-        # Equation can be edited in config
-        config_equation = self.settings.get("roulette_weight_func")
+        fitness_list = self.crossover(parents)
 
-        for indiv in fitness_list:
-            n=indiv[1]
-            individual_ranges.append((indiv[0], (cumulative_range+1, cumulative_range + eval(config_equation))))
-            cumulative_range += eval(config_equation)
+        # trim to max population
+        if len(fitness_list) > max_population:
+            fitness_list = fitness_list[:max_population]
 
-        while len(selected_indivs) < self.settings.get("selection_treshold"):
-            rand = random.randint(1, cumulative_range-1)
-
-            for rang in individual_ranges:
-                if rang[1][0] <= rand <= rang[1][1]:
-                    if rang[0] not in selected_indivs:
-                        selected_indivs.append(rang[0])
+        # convert from score tuples to just indivs
+        for i in fitness_list:
+            selected_indivs.append(i[0])
         
         return selected_indivs
 
 
-    def mutation(self, generation):
-        mutation_step_size = self.settings.get("mutation_step_size") # Num of mutated bits
-        inverted_mut_chance = int(1 / self.settings.get("mutation_chance"))
-
-        for indiv in generation:
-            rand = random.randint(1, inverted_mut_chance)
-            if rand==1:
-                genome_len = len(indiv) - 1
-                for i in range(mutation_step_size):
-                    rand_gene = indiv[random.randint(0, genome_len)]
-                    indiv[random.randint(0, genome_len)] = 0 if rand_gene == 1 else 1
-
-        return generation
-
-
     def crossover(self, fit_parents):
-        crossover_points_count = self.settings.get("crossover_points")
+        crossover_points_gene = self.settings.get("crossover_points_gene")
         crossover_points = []
         children=[]
         children_count = self.settings.get("gen_population") - self.settings.get("selection_treshold")
@@ -116,52 +124,48 @@ class EvolutionAlgorithm():
         return new_gen
 
 
+    def mutation(self, generation):
+        for indiv in generation:
+            mut_chance = indiv[3] / 10000 # indiv[3] is mutation_chance_gene
+            if not 0 <= mut_chance < 1:
+                return generation
+            
+            mutation_factor = indiv[4] / 100 # indiv[3] is mutation_factor_gene
+
+            if random.random() < mut_chance:
+                rand_gene = indiv[random.randint(0, len(indiv) - 1)]
+                if random.random() < 0.5:
+                    rand_gene += mutation_factor
+                else:
+                    rand_gene = abs(rand_gene - mutation_factor) # avoid negative gene scores
+                
+        return generation
+
+
     def get_new_gen(self, cur_gen):
-        fit_parents = self.selection(cur_gen)
-
-        # Creating new gen
-        fit_parents = self.crossover(fit_parents)
-        fit_parents = self.mutation(fit_parents)
-        return fit_parents
-
-
-    def get_gen_score(self, cur_gen):
-        foo = [self.evaluation(individual) for individual in cur_gen]
-        return sum(foo)
+        new_gen = self.selection(cur_gen) # includes crossover
+        new_gen = self.mutation(new_gen)
+        return new_gen
     
     
     def simulate(self):
         start_time = time.time()
-        convergence_criteria = self.settings.get("convergence_criteria")
-        convergence_counter = convergence_criteria
         max_iterations = self.settings.get("max_iterations")
         print_updates = self.settings.get("print_updates")
         update_step_perc = self.settings.get("update_step_perc")
         update_step = int(update_step_perc * max_iterations)
 
         cur_gen = self.init_firts_gen()
-        cur_total_fitness = self.get_gen_score(cur_gen)
 
         for i in range(max_iterations):
             if print_updates and not i % update_step:
-                print(f"{round(i / max_iterations,2):.2f}% | {round(time.time() - start_time, 2):.2f}s | Cur. best: {cur_total_fitness}")
-
-            if convergence_counter < 0:
-                print(f"Break point reached. Gen nr. {i}")
-                break
+                print(f"{round(i / max_iterations,2):.2f}% | {round(time.time() - start_time, 2):.2f}s | Population: {len(cur_gen)}")
 
             new_gen = self.get_new_gen([ind[:] for ind in cur_gen])
-            new_total_fitness = self.get_gen_score(new_gen)
-
-            if new_total_fitness <= cur_total_fitness:
-                convergence_counter -= 1
-                continue
             
-            convergence_counter = convergence_criteria
             cur_gen = [ind[:] for ind in new_gen]
-            cur_total_fitness = new_total_fitness
 
-        print(f"Total run time: {round(time.time() - start_time, 4):.4f}s | Score: {cur_total_fitness}")
+        print(f"Total run time: {round(time.time() - start_time, 4):.4f}s")
         if self.settings.get("print_final_gen"):
             for ind in sorted(cur_gen, key=sum, reverse=True):
                 print(ind, sum(ind))
