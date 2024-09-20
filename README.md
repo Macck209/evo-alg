@@ -3,11 +3,11 @@ A small, quick project i did for fun.
 
 Population consists of individuals (arrays) filled with ""bytes"". Algorithm rewards indivs with more ones. I may do sth more useful with it some day. 
 
-Messy codebase warning, because i mostly written the algorithm from memory.
+Messy codebase warning, because i've mostly written the algorithm from memory.
 
-Requires python 3.10. Probably way lower, but will check later.
+Min python versions: 2.6, 3.0
 
-Config wiki soon.
+ [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Macck209/evo-alg?tab=MIT-1-ov-file)
 
 ### Setup
 

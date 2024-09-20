@@ -50,7 +50,7 @@ class EvolutionAlgorithm():
         individual_ranges=[]
 
         # Equation can be edited in config
-        config_equation = self.settings.get("roulette_weigh_func")
+        config_equation = self.settings.get("roulette_weight_func")
 
         for indiv in fitness_list:
             n=indiv[1]
