@@ -15,4 +15,4 @@ Min python versions: 2.6, 3.0
    ```bash
    py evo_simulator.py
 
-Partially inspired by [Jakob Engel's](https://jakobengel.github.io/) paper on [swedish crossword puzzle generation](https://jakobengel.github.io/pdf/JakobEngelBsc.pdf)
+Partially inspired by [Jakob Engel's](https://jakobengel.github.io/) paper on [swedish crossword puzzle generation](https://jakobengel.github.io/pdf/JakobEngelBsc.pdf) 
