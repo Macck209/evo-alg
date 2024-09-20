@@ -132,7 +132,8 @@ class EvolutionAlgorithm():
     
     def simulate(self):
         start_time = time.time()
-        convergence_counter = self.settings.get("convergence_criteria")
+        convergence_criteria = self.settings.get("convergence_criteria")
+        convergence_counter = convergence_criteria
         max_iterations = self.settings.get("max_iterations")
         print_updates = self.settings.get("print_updates")
         update_step_perc = self.settings.get("update_step_perc")
@@ -156,6 +157,7 @@ class EvolutionAlgorithm():
                 convergence_counter -= 1
                 continue
             
+            convergence_counter = convergence_criteria
             cur_gen = [ind[:] for ind in new_gen]
             cur_total_fitness = new_total_fitness
 
