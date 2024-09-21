@@ -71,9 +71,9 @@ class EvolutionAlgorithm():
         super_indivs=[]
         parents=[]
         fitness_list = self.evaluation(cur_gen)
-        score_to_survive = self.settings.get("score_to_survive")
+        #score_to_survive = self.settings.get("score_to_survive")
         score_for_more_children = self.settings.get("score_for_more_children")
-        fitness_list[:] = [indiv for indiv in fitness_list if indiv[1] >= score_to_survive] # remove indivs below treshold
+        #fitness_list[:] = [indiv for indiv in fitness_list if indiv[1] >= score_to_survive] # remove indivs below treshold
         
         # Tournament-based selection of parents
         score_to_reproduce = self.settings.get("score_to_reproduce")
@@ -99,7 +99,8 @@ class EvolutionAlgorithm():
 
         for i in range(children_count):
             foo_parent, bar_parent = random.sample(fit_parents,2)
-            crossover_points_num = max(1, int((foo_parent[2] + bar_parent[2]) / 100)) # determined by parents' crossover_points_gene
+            # determined by parents' crossover_points_gene. Value between 1-5
+            crossover_points_num = min(len(foo_parent), max(1, int((foo_parent[2] + bar_parent[2]) / 100)))
             crossover_points = random.sample(range(1, len(fit_parents[0])), crossover_points_num)
             crossover_points.sort()
 
@@ -157,9 +158,9 @@ class EvolutionAlgorithm():
 
     def mutation(self, generation):
         for indiv in generation:
-            mut_chance = min(1, max(0, indiv[3] / 1000)) # indiv[3] is mutation_chance_gene
+            mut_chance = min(0, max(0, indiv[3] / 1000)) # indiv[3] is mutation_chance_gene
             if not 0 <= mut_chance < 1:
-                return generation
+                continue
             
             mutation_factor = int(indiv[4] / 10) # indiv[3] is mutation_factor_gene
             rng = random.random()
