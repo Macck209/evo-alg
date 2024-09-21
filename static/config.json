@@ -1,10 +1,14 @@
 {
-    "food": 30,
+    "food": 100,
     "init_population": 50,
     "max_population": 500,
-    "max_iterations": 100,
+    "max_iterations": 1000,
     "score_to_survive": 0.1,
     "score_to_reproduce": 1,
+    "score_for_more_children": 2,
+    "inbreeding_treshold": 4,
+    "inbreeding_mutation_factor": 100,
+    "max_gene_value": 200,
 
     "gatherer_gene": 100,
     "fertility_gene": 100,
@@ -15,8 +19,9 @@
     "gatherer_roulette_weight_func": "int(n**2)",
     "fertility_multiplier_func": "score*(fert/100)",
 
-    "print_final_gen": true,
+    "print_final_gen": false,
+    "print_final_stats": true,
     "print_updates": true,
-    "update_step_perc": 0.01,
+    "update_step_perc": 0.1,
     "print_population_graph": false
 }
