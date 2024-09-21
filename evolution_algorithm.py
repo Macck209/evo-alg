@@ -129,10 +129,11 @@ class EvolutionAlgorithm():
 
 
     def mutate_if_inbred(self, foo_parent, bar_parent, child):
+        similarity_treshold = self.settings.get("gene_similarity_treshold")
         inbreeding_treshold = self.settings.get("inbreeding_treshold")
         similar_gene_counter=0
         for (index, gene) in enumerate(foo_parent):
-            if gene == bar_parent[index]:
+            if gene in range(bar_parent[index]-similarity_treshold, bar_parent[index]+similarity_treshold):
                 similar_gene_counter += 1
 
         if inbreeding_treshold <= similar_gene_counter:
