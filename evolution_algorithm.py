@@ -23,7 +23,8 @@ class EvolutionAlgorithm():
 
     # Roulette-wheel assignment of points based on gatherer_gene
     def food_evaluation(self, cur_gen):
-        fitness_list=[[indiv, 0] for indiv in cur_gen]
+        # fitness_list values in order: genome, food collected, fertility score
+        fitness_list=[[indiv, 0, 0] for indiv in cur_gen]
         cumulative_range=0
         individual_ranges=[]
         food_left = self.settings.get("food")
@@ -43,41 +44,44 @@ class EvolutionAlgorithm():
 
             for (index, rang) in individual_ranges:
                 if rang[0] <= rnd <= rang[1]:
-                    fitness_list[index][1] += 1 # increment fitness score of drawn indiv
+                    fitness_list[index][1] += 1 # increment food score of drawn indiv
                     food_left -= 1
         
         return fitness_list
 
 
     def fertility_evaluation(self, fitness_list):
-        config_equation = self.settings.get("fertility_multiplier_func")
+        config_equation = self.settings.get("fertility_gatherer_relation")
         for indiv in fitness_list:
-            score=indiv[1]
+            food_score=indiv[1]
             fert=indiv[0][1]
-            indiv[1] = eval(config_equation)
-
-        return fitness_list
-
-
-    def evaluation(self, cur_gen):
-        fitness_list = self.food_evaluation(cur_gen)
-        fitness_list = self.fertility_evaluation(fitness_list)
+            indiv[2] = eval(config_equation)
 
         return fitness_list
         
 
-    def parent_selection(self, cur_gen):
+    def survival_selection(self, cur_gen):
+        score_to_survive = self.settings.get("score_to_survive")
+
+        fitness_list = self.food_evaluation(cur_gen)
+
+        # remove indivs below treshold
+        fitness_list[:] = [indiv for indiv in fitness_list if indiv[1] >= score_to_survive]
+
+        #TODO refactor whole code. put food and fertility score straight into indiv lists next to genome
+        # instead of creating new fitness_list every time
+        selected_indivs=[indiv[0] for indiv in fitness_list]
+        return selected_indivs, fitness_list
+
+
+    def parent_selection(self, fitness_list):
         selected_indivs=[]
         super_indivs=[]
         parents=[]
-        fitness_list = self.evaluation(cur_gen)
-        #score_to_survive = self.settings.get("score_to_survive")
-        score_for_more_children = self.settings.get("score_for_more_children")
-        #fitness_list[:] = [indiv for indiv in fitness_list if indiv[1] >= score_to_survive] # remove indivs below treshold
         
         # Tournament-based selection of parents
         score_to_reproduce = self.settings.get("score_to_reproduce")
-        fitness_list = sorted(fitness_list, key=lambda x: x[1], reverse=True)
+        fitness_list = sorted(self.fertility_evaluation(fitness_list), key=lambda x: x[2], reverse=True)
         for indiv in [fertile_indiv for fertile_indiv in fitness_list if fertile_indiv[1] >= score_to_reproduce]:
             parents.append(indiv)
 
@@ -86,8 +90,9 @@ class EvolutionAlgorithm():
             selected_indivs.append(i[0]) #TODO clearer variable names for parents and selected_indivs
         
         # indivs whom can reproduce more than once
+        score_for_more_children = self.settings.get("score_for_more_children")
         for i in fitness_list:
-            if i[1] > score_for_more_children:
+            if i[2] > score_for_more_children:
                 super_indivs.append(i[0])
         
         return selected_indivs, super_indivs
@@ -101,7 +106,7 @@ class EvolutionAlgorithm():
             foo_parent, bar_parent = random.sample(fit_parents,2)
             # determined by parents' crossover_points_gene. Value between 1-5
             crossover_points_num = min(len(foo_parent), max(1, int((foo_parent[2] + bar_parent[2]) / 100)))
-            crossover_points = random.sample(range(1, len(fit_parents[0])), crossover_points_num)
+            crossover_points = random.sample(range(1, len(fit_parents[0])), min(crossover_points_num, 4))
             crossover_points.sort()
 
             use_foo_parent = True
@@ -175,13 +180,15 @@ class EvolutionAlgorithm():
     def get_new_gen(self, cur_gen):
         max_population = self.settings.get("max_population")
 
-        parents, super_parents = self.parent_selection(cur_gen)
+        survivors, fitness_list = self.survival_selection(cur_gen)
+        parents, super_parents = self.parent_selection(fitness_list)
 
         if len(parents) < 2:
             return []
 
         new_gen = self.crossover(parents, [])
         new_gen = self.crossover(super_parents, new_gen)
+        new_gen.extend(survivors)
 
         # trim to max population
         if len(new_gen) > max_population:
@@ -205,7 +212,7 @@ class EvolutionAlgorithm():
             if print_updates and not i % update_step:
                 print(f"{round(100 * i / max_iterations,2):.2f}% | {round(time.time() - start_time, 2):.2f}s | Population: {len(cur_gen)}")
 
-            if len(cur_gen) < 2:
+            if len(cur_gen) < 2: #TODO if == 2 then save for statistics for when they go extinct
                 break
 
             new_gen = self.get_new_gen([ind[:] for ind in cur_gen])
