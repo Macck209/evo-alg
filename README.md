@@ -1,3 +1,5 @@
+### Warning! Experimental branch!!!
+
 # Evolution algorithm
 A small evolution simulator i made for fun. Messy codebase warning, because i've mostly written the algorithm from memory/scratch.
 
@@ -9,7 +11,7 @@ A small evolution simulator i made for fun. Messy codebase warning, because i've
 Min python versions: 2.6, 3.0
 1. Clone this branch
    ```bash
-   git clone --branch species https://github.com/Macck209/evo-alg.git .
+   git clone --branch refactor_fitness_list https://github.com/Macck209/evo-alg.git .
 2. Experiment with config
 3. Run the script
    ```bash

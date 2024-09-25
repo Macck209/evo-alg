@@ -1,15 +1,19 @@
 {
-    "food": 30,
-    "init_population": 50,
+    "food": 40,
+    "init_population": 20,
     "max_population": 500,
-    "max_iterations": 5000,
-    "score_to_survive": 0.1,
-    "score_to_reproduce": 1.25,
-    "score_for_more_children": 1.75,
+    "max_iterations": 10000,
+    "age_gatherer_debuff": 0.99,
+    "age_fertility_buff": 1.1,
+    "score_to_survive": 1,
+    "survive_to_reproduce": true,
+    "score_to_reproduce": 5,
+    "score_for_more_children": 10,
     "gene_similarity_treshold": 5,
     "inbreeding_treshold": 4,
-    "inbreeding_mutation_factor": 100,
+    "inbreeding_mutation_factor": 80,
     "max_gene_value": 200,
+    "min_gene_value": 1,
 
     "gatherer_gene": 100,
     "fertility_gene": 100,
@@ -17,12 +21,12 @@
     "mutation_chance_gene": 100,
     "mutation_factor_gene": 100,
 
-    "gatherer_roulette_weight_func": "int(n)",
-    "fertility_gatherer_relation": "(fert/100) / max(1, food_score)",
+    "gatherer_roulette_weight_func": "int(n*(debuff**age))",
+    "fertility_gatherer_relation": "((fert/100) / max(food_score, 1))*(buff**age)",
 
-    "print_final_gen": false,
+    "print_final_gen": true,
     "print_final_stats": true,
     "print_updates": true,
-    "update_step_perc": 0.1,
+    "update_step_perc": 0.01,
     "print_population_graph": false
 }
